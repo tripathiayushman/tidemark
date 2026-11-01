@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
+// Tidemark is a fully authenticated, per-workspace app: every route reads the
+// Supabase session cookie. Cache Components / partial prefetching add little
+// here, so we use the classic dynamic rendering model.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
+    root: process.cwd(),
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
@@ -12,6 +13,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  serverExternalPackages: ["pdf-parse"],
 };
 
 export default nextConfig;
