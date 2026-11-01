@@ -9,7 +9,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { switchWorkspace } from "@/app/actions/workspace";
 
@@ -65,13 +65,16 @@ export function AppSidebar({
             <ChevronsUpDown className="size-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-            {memberships.map((m) => (
-              <DropdownMenuItem key={m.id} onClick={() => switchWorkspace(m.id)}>
-                <span className="truncate">{m.name}</span>
-                {m.id === workspace.id ? <span className="ml-auto text-xs text-muted-foreground">current</span> : null}
-              </DropdownMenuItem>
-            ))}
+            {/* Base UI requires group labels to sit inside a Menu.Group */}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+              {memberships.map((m) => (
+                <DropdownMenuItem key={m.id} onClick={() => switchWorkspace(m.id)}>
+                  <span className="truncate">{m.name}</span>
+                  {m.id === workspace.id ? <span className="ml-auto text-xs text-muted-foreground">current</span> : null}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/onboarding?new=1" />}>
               <Plus /> New workspace
