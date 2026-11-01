@@ -57,3 +57,11 @@ export async function claimSchedule(key: string): Promise<boolean> {
   if (error.code === "23505") return false;
   throw new Error(`scheduled_runs insert failed: ${error.message}`);
 }
+
+/** Thrown by a handler to put its job back for later without spending an attempt. */
+export class DeferJobError extends Error {
+  constructor(message: string, readonly delayMs: number) {
+    super(message);
+    this.name = "DeferJobError";
+  }
+}

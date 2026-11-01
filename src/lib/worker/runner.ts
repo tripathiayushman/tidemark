@@ -1,6 +1,6 @@
 import { hostname } from "node:os";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { claimSchedule, enqueue, type JobKind } from "@/lib/jobs";
+import { claimSchedule, DeferJobError, enqueue, type JobKind } from "@/lib/jobs";
 import { CONNECTORS } from "@/lib/sources";
 import { coreHandlers, type HandlerTable } from "./handlers";
 import { integrationHandlers } from "@/lib/integrations/handlers";
@@ -38,19 +38,21 @@ export async function tick(opts: { budgetMs?: number; worker?: string } = {}): P
           await db.rpc("complete_job", { p_id: job.id, p_result: (result ?? null) as object });
           ran.push({ id: job.id, kind: job.kind, ok: true, ms: Date.now() - started });
         } catch (e) {
-          if (e instanceof LlmRateLimitError) {
-            // Free-tier limit: put the job back for when the limit resets, without
-            // spending one of its attempts, and stop claiming work this tick.
-            rateLimited = true;
+          if (e instanceof LlmRateLimitError || e instanceof DeferJobError) {
+            // Rate limit, or the handler asked to wait (e.g. knowledge base still
+            // being read): put the job back without spending an attempt. Only a
+            // rate limit stops claiming more work this tick.
+            if (e instanceof LlmRateLimitError) rateLimited = true;
+            const delayMs = e instanceof LlmRateLimitError ? e.retryAfterMs : e.delayMs;
             await db.from("jobs").update({
               status: "queued",
               attempts: Math.max(0, job.attempts - 1),
-              run_after: new Date(Date.now() + e.retryAfterMs).toISOString(),
+              run_after: new Date(Date.now() + delayMs).toISOString(),
               locked_at: null,
               locked_by: null,
               last_error: e.message.slice(0, 500),
             }).eq("id", job.id);
-            ran.push({ id: job.id, kind: job.kind, ok: false, ms: Date.now() - started, error: `deferred ${Math.round(e.retryAfterMs / 1000)}s: rate limit` });
+            ran.push({ id: job.id, kind: job.kind, ok: false, ms: Date.now() - started, error: `deferred ${Math.round(delayMs / 1000)}s: ${e instanceof LlmRateLimitError ? "rate limit" : e.message}` });
             return;
           }
           const msg = (e as Error).message ?? String(e);

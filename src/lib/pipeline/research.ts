@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { generateStructured, type Effort } from "@/lib/ai/llm";
 import { optionalEnv } from "@/lib/env";
-import { enqueue } from "@/lib/jobs";
+import { DeferJobError, enqueue } from "@/lib/jobs";
 import type { Account, Company, Icp, SellerProfile } from "@/lib/types";
 import { daysBetween, formatMoney } from "./normalize";
 import { scoreAccount, type ScoredSignal } from "./scoring";
@@ -157,6 +157,23 @@ export async function researchAccount(db: SupabaseClient, accountId: string, opt
   ]);
   if (!company) throw new Error("company missing");
   if (!icpRow) throw new Error("workspace has no ICP yet");
+  if (!seller?.summary) {
+    // Don't research blind (and spend LLM quota) while the knowledge base is still being read.
+    const { count: pendingDocs } = await db
+      .from("kb_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", acc.workspace_id)
+      .in("status", ["queued", "processing"]);
+    const { count: profileJobs } = await db
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", acc.workspace_id)
+      .eq("kind", "seller.profile")
+      .in("status", ["queued", "running"]);
+    if ((pendingDocs ?? 0) > 0 || (profileJobs ?? 0) > 0) {
+      throw new DeferJobError("waiting for the knowledge base to finish", 3 * 60_000);
+    }
+  }
   const icp = icpRow as Icp;
 
   const { data: sigRows } = await db
