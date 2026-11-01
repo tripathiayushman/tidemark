@@ -130,6 +130,8 @@ export function canSendFrom(conn: ConnectionRow): boolean {
   return (
     conn.provider === "gmail" &&
     conn.status === "active" &&
+    conn.settings?.sandbox !== true && // sandbox mailboxes are "sent" by integrations/sandbox.ts
+
     conn.settings?.sending_enabled === true &&
     (conn.scopes ?? []).includes(GMAIL_SEND_SCOPE)
   );
