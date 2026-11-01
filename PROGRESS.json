@@ -1,0 +1,113 @@
+{
+  "project": "Tidemark",
+  "milestones": [
+    {
+      "id": "research",
+      "label": "Research spec from public pages",
+      "weight": 4,
+      "done": true
+    },
+    {
+      "id": "scaffold",
+      "label": "Scaffold (Next 16, shadcn, SDKs)",
+      "weight": 4,
+      "done": true
+    },
+    {
+      "id": "schema",
+      "label": "Database schema + RLS (verified)",
+      "weight": 10,
+      "done": true
+    },
+    {
+      "id": "supabase",
+      "label": "Hosted Supabase linked + migrated",
+      "weight": 4,
+      "done": true
+    },
+    {
+      "id": "core-lib",
+      "label": "Core libs (clients, crypto, jobs, LLM)",
+      "weight": 6,
+      "done": true
+    },
+    {
+      "id": "ingestion",
+      "label": "Public-data connectors + resolver",
+      "weight": 10,
+      "done": true
+    },
+    {
+      "id": "seed",
+      "label": "Synthetic demo dataset",
+      "weight": 4,
+      "done": true
+    },
+    {
+      "id": "reasoning",
+      "label": "Scoring + reason-to-buy pipeline",
+      "weight": 10,
+      "done": true
+    },
+    {
+      "id": "knowledge",
+      "label": "Knowledge base + ICP builder",
+      "weight": 6,
+      "done": true
+    },
+    {
+      "id": "contacts",
+      "label": "Contacts, verification, warm paths",
+      "weight": 6,
+      "done": true
+    },
+    {
+      "id": "worker",
+      "label": "Worker, scheduler, cron",
+      "weight": 4,
+      "done": true
+    },
+    {
+      "id": "ui-shell",
+      "label": "Auth, onboarding, app shell",
+      "weight": 6,
+      "done": true
+    },
+    {
+      "id": "ui-pages",
+      "label": "Home, Prospects, Profile, Tasks, Insights",
+      "weight": 10,
+      "done": true
+    },
+    {
+      "id": "chat",
+      "label": "AI chat with tools",
+      "weight": 5,
+      "done": true
+    },
+    {
+      "id": "crm",
+      "label": "HubSpot + Attio sync",
+      "weight": 5,
+      "done": true
+    },
+    {
+      "id": "gmail",
+      "label": "Gmail read + campaign sending",
+      "weight": 5,
+      "done": true
+    },
+    {
+      "id": "instantly",
+      "label": "Instantly + Granola",
+      "weight": 3,
+      "done": true
+    },
+    {
+      "id": "verify",
+      "label": "Build, typecheck, end-to-end run",
+      "weight": 4,
+      "done": true
+    }
+  ]
+}
