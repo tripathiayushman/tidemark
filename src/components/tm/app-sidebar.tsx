@@ -106,7 +106,7 @@ export function AppSidebar({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <form action="/auth/signout" method="post">
-              <DropdownMenuItem render={<button type="submit" className="w-full" />}>
+              <DropdownMenuItem nativeButton render={<button type="submit" className="w-full" />}>
                 <LogOut /> Sign out
               </DropdownMenuItem>
             </form>

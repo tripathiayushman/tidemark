@@ -26,7 +26,11 @@ export function ChatView({ threads, threadId, initial }: { threads: { id: string
   const [tid, setTid] = useState<string | null>(threadId);
   const end = useRef<HTMLDivElement>(null);
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [msgs]);
+  useEffect(() => {
+    // Block body: newer browsers return a Promise from scrollIntoView, and an
+    // effect must return nothing or a cleanup function.
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
 
   async function send(text: string) {
     if (!text.trim() || busy) return;
@@ -67,7 +71,7 @@ export function ChatView({ threads, threadId, initial }: { threads: { id: string
   return (
     <div className="flex h-screen">
       <aside className="hidden w-60 shrink-0 flex-col border-r lg:flex">
-        <div className="p-3"><Button variant="outline" className="w-full justify-start" render={<Link href="/chat" />}><MessageSquarePlus /> New chat</Button></div>
+        <div className="p-3"><Button variant="outline" className="w-full justify-start" nativeButton={false} render={<Link href="/chat" />}><MessageSquarePlus /> New chat</Button></div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
           {threads.map((t) => (
             <Link key={t.id} href={`/chat?t=${t.id}`} className={cn("block truncate rounded-md px-2.5 py-1.5 text-sm", t.id === tid ? "bg-muted font-medium" : "text-muted-foreground hover:bg-muted/60")}>{t.title}</Link>

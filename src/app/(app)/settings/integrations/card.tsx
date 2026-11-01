@@ -105,7 +105,7 @@ export function IntegrationCard({
           <p className="text-xs text-muted-foreground">Ask a workspace admin to connect {provider.name}.</p>
         ) : canConnect ? (
           provider.kind === "oauth" ? (
-            <Button render={<a href={`/api/oauth/${provider.id}/start`} />}><Plug /> Connect {provider.name}</Button>
+            <Button nativeButton={false} render={<a href={`/api/oauth/${provider.id}/start`} />}><Plug /> Connect {provider.name}</Button>
           ) : (
             <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); connectKey(); }}>
               <Input type="password" placeholder={`${provider.name} API key`} value={key} onChange={(e) => setKey(e.target.value)} autoComplete="off" />
