@@ -63,12 +63,15 @@ Deploy the Next.js app (for example to Vercel). Connector runs and record matchi
 | `permits.chicago_building_permits` | City of Chicago (Socrata `ydr8-5enu`) | none | Industrial or manufacturing work with a business owner. Add cities in `src/lib/sources/permits.ts` |
 | `fmcsa.carriers` | FMCSA Company Census (`az4n-8mr2`) | none | New private-property fleets plus weekly fleet-size snapshots that trigger `fleet_growth` |
 | `sba.foia_504` / `sba.foia_7a` | SBA FOIA CSVs (data.sba.gov) | none | Finds the latest quarterly file on its own. Can be overridden with `SBA_*_CSV_URL` |
-| `press.rss` | Your `PRESS_RSS_FEEDS` | — | Claude extracts company-specific events. Check each publication's reuse terms |
+| `press.rss` | Your `PRESS_RSS_FEEDS` (default: Area Development project announcements) | — | The LLM extracts company-specific events; only headlines, one-line summaries and links are stored. Check each publication's reuse terms |
+| `federal_register.ftz` | Federal Register API (Foreign-Trade Zones Board) | none | Production authorizations and subzone filings: named company, site and products |
+| `ucc.ct` | Connecticut UCC lien filings (Socrata `xfev-8smz`) | none | New UCC-1s by equipment lenders against manufacturer-like debtors (public domain) |
+| `warn.feed` | WARN Feed (CC BY 4.0) | none | Layoff notices as a **negative** signal; attaches only to companies already tracked |
 | `seed.demo` | Generated | — | Fictional, clearly labelled |
 
 Dry-run any connector without the database: `npm run try-connector -- usaspending.contracts 10 60`.
 
-**Not included, on purpose.** Shipment-level customs and supplier-switch data have no free source; it needs a licensed bill-of-lading provider (ImportGenius, Panjiva or Descartes Datamyne). ImportYeti's terms forbid embedding it in a product. Austin and LA permit feeds have no owner field, so adding them requires matching on address. **LinkedIn is not scraped.** Warm paths come from the team's own Gmail, Granola, CRM and LinkedIn connections export.
+**Not included, on purpose.** Shipment-level customs and supplier-switch data have no free source; it needs a licensed bill-of-lading provider (ImportGenius, Panjiva or Descartes Datamyne). ImportYeti's terms forbid embedding it in a product. Austin and LA permit feeds have no owner field, and NYC's owner field is usually a property-holding LLC, so those need address matching before they are useful. **LinkedIn is not scraped.** Warm paths come from the team's own Gmail, Granola, CRM and LinkedIn connections export.
 
 ## Contact data and licensing
 
