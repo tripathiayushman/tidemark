@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
 import { Logo } from "@/components/tm/logo";
+import { devLoginEmail, devLoginEnabled } from "@/lib/dev-login";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -16,6 +17,12 @@ export default async function LoginPage(props: PageProps<"/login">) {
           <h1 className="text-2xl font-semibold tracking-tight">Sign in to Tidemark</h1>
           <p className="mt-2 text-sm text-muted-foreground">We&apos;ll email you a magic link. No password needed.</p>
           <LoginForm next={next} initialError={error} />
+          {devLoginEnabled() ? (
+            <form action="/auth/dev-login" method="post" className="mt-6 rounded-lg border border-dashed border-signal/60 p-3">
+              <p className="mb-2 text-xs text-muted-foreground">Development only — signs in as <span className="font-medium text-foreground">{devLoginEmail()}</span> without an email.</p>
+              <button type="submit" className="w-full rounded-md bg-signal/20 px-3 py-2 text-sm font-medium text-signal-foreground hover:bg-signal/30">Dev login (test)</button>
+            </form>
+          ) : null}
         </div>
         <p className="text-xs text-muted-foreground">By continuing you agree to use Tidemark for low-volume, relevant, consent-respecting outreach.</p>
       </div>
