@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enqueue, type JobKind } from "@/lib/jobs";
 import { unregisterInstantlyWebhook, listInstantlyCampaigns } from "@/lib/integrations/outreach/instantly";
+import { getConnection } from "@/lib/integrations/connections";
+import { connectSandbox, isSandbox, sandboxEnabled, SANDBOX_INSTANTLY_CAMPAIGNS, simulateGmailReply, simulateInstantlyEvent } from "@/lib/integrations/sandbox";
+import type { Provider } from "@/lib/types";
 
 async function ownConnection(id: string) {
   const ctx = await getWorkspaceContext();
@@ -22,7 +25,7 @@ export async function disconnectIntegration(id: string) {
   const { ctx, conn, canManage } = await ownConnection(id);
   if (!canManage) return { error: "Only an admin or the person who connected it can disconnect" };
   const admin = createAdminClient();
-  if (conn.provider === "instantly") {
+  if (conn.provider === "instantly" && !isSandbox(conn as { settings: Record<string, unknown> })) {
     await unregisterInstantlyWebhook(admin, id).catch((e) => console.error(`[integrations] webhook cleanup: ${(e as Error).message}`));
   }
   const { error } = await admin.from("integration_connections").delete().eq("id", id).eq("workspace_id", ctx.workspace.id);
@@ -62,10 +65,36 @@ export async function updateGmailSettings(id: string, patch: { sending_enabled?:
 }
 
 export async function instantlyCampaigns(connectionId: string) {
-  await ownConnection(connectionId);
+  const { conn } = await ownConnection(connectionId);
+  if (isSandbox(conn as { settings: Record<string, unknown> })) return { campaigns: SANDBOX_INSTANTLY_CAMPAIGNS };
   try {
     return { campaigns: await listInstantlyCampaigns(createAdminClient(), connectionId) };
   } catch (e) {
     return { error: (e as Error).message, campaigns: [] };
   }
+}
+
+// ── Dev-only sandbox ────────────────────────────────────────────────────
+export async function connectSandboxAction(provider: Provider) {
+  if (!sandboxEnabled()) return { error: "Sandbox is not enabled (INTEGRATIONS_SANDBOX=true, dev only)" };
+  const ctx = await getWorkspaceContext();
+  if (!ctx) return { error: "No workspace" };
+  if (provider === "instantly" && !isAdmin(ctx.role)) return { error: "Only admins can connect Instantly" };
+  const conn = await connectSandbox(createAdminClient(), ctx.workspace.id, ctx.user.id, provider);
+  const first: Partial<Record<Provider, JobKind>> = { hubspot: "crm.push", attio: "crm.push", gmail: "gmail.sync", granola: "granola.sync" };
+  const kind = first[provider];
+  if (kind) await enqueue(kind, { connectionId: conn.id } as never, { workspaceId: ctx.workspace.id, dedupeKey: `${kind}:${conn.id}`, priority: 15 });
+  revalidatePath("/settings/integrations");
+  return { ok: true };
+}
+
+export async function simulateSandboxEvent(connectionId: string, kind: "reply" | "bounce" | "unsubscribe") {
+  if (!sandboxEnabled()) return { error: "Sandbox is not enabled" };
+  await ownConnection(connectionId);
+  const admin = createAdminClient();
+  const conn = await getConnection(admin, connectionId);
+  if (!isSandbox(conn)) return { error: "Not a sandbox connection" };
+  const r = conn.provider === "instantly" ? await simulateInstantlyEvent(admin, conn, kind) : conn.provider === "gmail" ? await simulateGmailReply(admin, conn) : { error: "Nothing to simulate for this provider" };
+  revalidatePath("/campaigns");
+  return r;
 }

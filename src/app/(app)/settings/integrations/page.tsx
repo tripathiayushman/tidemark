@@ -3,6 +3,7 @@ import { requireWorkspace, isAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { IntegrationCard, type ConnectionView } from "./card";
 import { serverEnv } from "@/lib/env";
+import { sandboxEnabled } from "@/lib/integrations/sandbox";
 
 export const metadata: Metadata = { title: "Integrations" };
 
@@ -54,6 +55,11 @@ export default async function IntegrationsPage(props: PageProps<"/settings/integ
     <div className="space-y-4">
       {typeof sp.connected === "string" ? <p className="rounded-lg border border-tide/40 bg-accent/50 px-3 py-2 text-sm">Connected {sp.connected}. The first sync is running.</p> : null}
       {typeof sp.error === "string" ? <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{oauthError(sp.error)}</p> : null}
+      {sandboxEnabled() ? (
+        <p className="rounded-lg border border-dashed border-signal/60 bg-signal/10 px-3 py-2 text-sm">
+          <span className="font-medium">Sandbox mode is on (dev only).</span> “Connect sandbox” creates a fake connection: CRM pushes, Gmail sends, replies and meetings are simulated inside Tidemark — nothing reaches a real service. Sandbox follow-up delays run in minutes instead of days.
+        </p>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         {PROVIDERS.map((p) => (
           <IntegrationCard
@@ -62,6 +68,7 @@ export default async function IntegrationsPage(props: PageProps<"/settings/integ
             connections={conns.filter((c) => c.provider === p.id)}
             canAdmin={isAdmin(ctx.role)}
             userId={ctx.user.id}
+            sandbox={sandboxEnabled()}
           />
         ))}
       </div>

@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { disconnectIntegration, syncNow, updateGmailSettings } from "@/app/actions/integrations";
+import { connectSandboxAction, disconnectIntegration, simulateSandboxEvent, syncNow, updateGmailSettings } from "@/app/actions/integrations";
+import type { Provider } from "@/lib/types";
 import { ago } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -24,12 +25,13 @@ export interface ConnectionView {
 }
 
 export function IntegrationCard({
-  provider, connections, canAdmin, userId,
+  provider, connections, canAdmin, userId, sandbox = false,
 }: {
   provider: { id: string; name: string; kind: "oauth" | "apikey"; blurb: string; rules: string[]; perMember: boolean; adminOnly: boolean; configured: boolean };
   connections: ConnectionView[];
   canAdmin: boolean;
   userId: string;
+  sandbox?: boolean;
 }) {
   const router = useRouter();
   const [key, setKey] = useState("");
@@ -59,11 +61,15 @@ export function IntegrationCard({
         {connections.map((c) => (
           <div key={c.id} className={cn("rounded-lg border p-3 text-sm", c.status === "error" && "border-destructive/50")}>
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-medium">{c.account_label ?? provider.name}</span>
+              <span className="flex min-w-0 items-center gap-1.5 truncate font-medium">
+                {c.account_label ?? provider.name}
+                {c.settings?.sandbox ? <span className="rounded border border-dashed border-signal/60 px-1 text-[10px] uppercase tracking-wide text-signal-foreground">Sandbox</span> : null}
+              </span>
               <span className="shrink-0 text-xs text-muted-foreground">{c.last_synced_at ? `synced ${ago(c.last_synced_at)}` : "not synced yet"}</span>
             </div>
             {c.error ? <p className="mt-1 text-xs text-destructive">{c.error}</p> : null}
             {provider.id === "gmail" && c.connected_by === userId ? <GmailControls conn={c} /> : null}
+            {c.settings?.sandbox && (provider.id === "instantly" || provider.id === "gmail") ? <SimulateControls connectionId={c.id} instantly={provider.id === "instantly"} /> : null}
             <div className="mt-2 flex gap-2">
               {provider.id !== "instantly" ? (
                 <Button variant="outline" size="xs" disabled={pending} onClick={() => start(async () => { const r = await syncNow(c.id); if (r.error) toast.error(r.error); else toast.success("Syncing"); })}><RefreshCw /> Sync now</Button>
@@ -80,6 +86,19 @@ export function IntegrationCard({
       </div>
 
       <div className="mt-auto pt-4">
+        {sandbox && (provider.perMember ? !mine : connections.length === 0) && (!provider.adminOnly || canAdmin) ? (
+          <Button
+            variant="outline"
+            className="mb-2 border-dashed"
+            disabled={pending}
+            onClick={() => start(async () => {
+              const r = await connectSandboxAction(provider.id as Provider);
+              if (r.error) toast.error(r.error); else { toast.success(`${provider.name} sandbox connected`); router.refresh(); }
+            })}
+          >
+            Connect sandbox
+          </Button>
+        ) : null}
         {!provider.configured ? (
           <p className="text-xs text-muted-foreground">Not configured: set the {provider.name} OAuth client ID/secret in the server environment.</p>
         ) : provider.adminOnly && !canAdmin ? (
@@ -131,6 +150,23 @@ function GmailControls({ conn }: { conn: ConnectionView }) {
           <option value="owned">Only prospects I own</option>
         </select>
       </label>
+    </div>
+  );
+}
+
+function SimulateControls({ connectionId, instantly }: { connectionId: string; instantly: boolean }) {
+  const [pending, start] = useTransition();
+  const router = useRouter();
+  const run = (kind: "reply" | "bounce" | "unsubscribe") => start(async () => {
+    const r = await simulateSandboxEvent(connectionId, kind);
+    if (r && "error" in r && r.error) toast.error(r.error); else { toast.success(`Simulated ${kind}`); router.refresh(); }
+  });
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t pt-2 text-xs">
+      <span className="text-muted-foreground">Simulate:</span>
+      <Button variant="outline" size="xs" disabled={pending} onClick={() => run("reply")}>Reply</Button>
+      {instantly ? <Button variant="outline" size="xs" disabled={pending} onClick={() => run("bounce")}>Bounce</Button> : null}
+      {instantly ? <Button variant="outline" size="xs" disabled={pending} onClick={() => run("unsubscribe")}>Unsubscribe</Button> : null}
     </div>
   );
 }
