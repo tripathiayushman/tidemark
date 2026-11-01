@@ -8,6 +8,8 @@ import { seedConnector } from "./seed";
 import { ftzNotices } from "./ftz";
 import { ctUcc } from "./ucc";
 import { warnNotices } from "./warn";
+import { epaAirFacilities } from "./echo";
+import { osha300a } from "./osha";
 
 // Registry of every data connector. Customs shipments and supplier switches
 // need a licensed bill-of-lading provider (ImportGenius, Panjiva, ...); until
@@ -22,6 +24,8 @@ export const CONNECTORS: Connector[] = [
   ftzNotices,
   ctUcc,
   warnNotices,
+  epaAirFacilities,
+  osha300a,
   seedConnector,
 ];
 

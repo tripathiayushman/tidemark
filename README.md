@@ -49,7 +49,8 @@ public datasets ──► source_records ──► entity resolution ──► c
 3. **Database:** `npm run db:push` applies `supabase/migrations/*` to the project ref pinned in `scripts/db-push.sh`, using only that project's password.
 4. **Auth URLs:** in Supabase → Authentication → URL Configuration, set Site URL to your app URL and add `<app>/auth/callback` to the Redirect URLs. Enable Google under Providers if you want Google sign-in.
 5. **Run:** `npm run dev` (app) and `npm run worker` (background jobs) in two terminals.
-6. **Try it:** sign up, finish onboarding, and leave "Add demo data" on. The demo set is 120 fictional manufacturers marked **Demo**, using reserved `.example` domains so nothing can be emailed. Real public-record connectors run on their schedule, or from Settings → Data sources → Run now.
+6. **Dev login (local only):** set `DEV_LOGIN_ENABLED=true` and `DEV_LOGIN_EMAIL` in `.env.local` to get a one-click "Dev login" button on /login with no email round trip. It never works in production builds.
+7. **Try it:** sign up, finish onboarding, and leave "Add demo data" on. The demo set is 120 fictional manufacturers marked **Demo**, using reserved `.example` domains so nothing can be emailed. Real public-record connectors run on their schedule, or from Settings → Data sources → Run now.
 
 ### Production
 
@@ -67,6 +68,8 @@ Deploy the Next.js app (for example to Vercel). Connector runs and record matchi
 | `federal_register.ftz` | Federal Register API (Foreign-Trade Zones Board) | none | Production authorizations and subzone filings: named company, site and products |
 | `ucc.ct` | Connecticut UCC lien filings (Socrata `xfev-8smz`) | none | New UCC-1s by equipment lenders against manufacturer-like debtors (public domain) |
 | `warn.feed` | WARN Feed (CC BY 4.0) | none | Layoff notices as a **negative** signal; attaches only to companies already tracked |
+| `epa.air_new_facilities` | EPA ECHO / ICIS-Air (public domain) | none | Manufacturing plants listed as **planned** or **under construction**. ECHO has no status date, so signals are dated when first observed |
+| `osha.ita_300a` | OSHA ITA Form 300A (public domain) | none | Plant headcount, NAICS and EIN for tracked companies, plus year-over-year headcount growth. osha.gov blocks some non-US networks; run from US hosting or set `OSHA_300A_CSV_URL` |
 | `seed.demo` | Generated | — | Fictional, clearly labelled |
 
 Dry-run any connector without the database: `npm run try-connector -- usaspending.contracts 10 60`.
