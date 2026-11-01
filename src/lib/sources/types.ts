@@ -63,6 +63,8 @@ export interface Connector {
   category: SignalCategory;
   defaultLookbackDays: number;
   schedule: "daily" | "weekly" | "manual";
+  /** Only attach records to companies we already know; never create new ones (e.g. layoff notices). */
+  matchOnly?: boolean;
   /** Why it is disabled, or null when ready to run. */
   disabledReason(): string | null;
   fetch(ctx: FetchContext): Promise<FetchResult>;

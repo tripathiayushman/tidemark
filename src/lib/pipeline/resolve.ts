@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { connectorFor } from "@/lib/sources";
 import type { StoredRecord } from "@/lib/sources/types";
-import { companyKey, normalizeDomain, titleCaseCompany, zip5 } from "./normalize";
+import { companyKey, normalizeDomain, stateCode, titleCaseCompany, zip5 } from "./normalize";
 
 // Entity resolution + signal extraction for newly ingested records.
 //
@@ -95,7 +95,12 @@ async function resolveOne(db: SupabaseClient, rec: StoredRecord, stats: ResolveS
         stats.skipped++;
         return;
       }
-      const res = await resolveCompany(db, rec);
+      const res = await resolveCompany(db, rec, { allowCreate: !connectorFor(rec.source, rec.dataset)?.matchOnly });
+      if (!res) {
+        await markProcessed(db, rec.id, { match_method: "no_match" });
+        stats.skipped++;
+        return;
+      }
       companyId = res.companyId;
       if (res.created) stats.created++;
       else stats.matched++;
@@ -147,9 +152,10 @@ async function markProcessed(db: SupabaseClient, id: string, extra: Record<strin
 export async function resolveCompany(
   db: SupabaseClient,
   rec: Pick<StoredRecord, "entity_name" | "entity_street" | "entity_city" | "entity_state" | "entity_postal_code" | "entity_identifiers" | "source" | "is_synthetic">,
-): Promise<{ companyId: string; created: boolean; confidence: number; method: string }> {
+  opts: { allowCreate?: boolean } = {},
+): Promise<{ companyId: string; created: boolean; confidence: number; method: string } | null> {
   const ids = rec.entity_identifiers ?? {};
-  const state = rec.entity_state?.toUpperCase() ?? null;
+  const state = stateCode(rec.entity_state); // unknown / foreign values → null, never a guessed code
 
   // 1. identifiers
   for (const [col, val] of [["uei", ids.uei], ["usdot_number", ids.usdot]] as const) {
@@ -197,7 +203,8 @@ export async function resolveCompany(
     }
   }
 
-  // 5. create
+  // 5. create (unless this source only enriches known companies)
+  if (opts.allowCreate === false) return null;
   const { data: created, error: cErr } = await db
     .from("companies")
     .insert({
@@ -218,7 +225,7 @@ export async function resolveCompany(
     .single();
   if (cErr) {
     // A concurrent run may have created the same identifier; retry the lookup once.
-    if (cErr.code === "23505") return resolveCompany(db, rec);
+    if (cErr.code === "23505") return resolveCompany(db, rec, opts);
     throw new Error(`create company: ${cErr.message}`);
   }
   await addAlias(db, created.id, rec.entity_name!, rec.source, "legal");
