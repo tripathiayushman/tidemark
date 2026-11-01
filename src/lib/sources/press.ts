@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Connector, RawRecord } from "./types";
 import { optionalEnv } from "@/lib/env";
 import { generateStructured } from "@/lib/ai/llm";
-import { toIsoDate } from "@/lib/pipeline/normalize";
+import { stateCode, toIsoDate } from "@/lib/pipeline/normalize";
 
 // Trade press via RSS. Feeds come from PRESS_RSS_FEEDS (comma-separated).
 // Claude reads each batch of headlines + summaries and pulls out concrete,
@@ -122,7 +122,7 @@ export const tradePress: Connector = {
           occurred_on: item.pubDate,
           entity_name: ev.company_name,
           entity_city: ev.city,
-          entity_state: ev.state,
+          entity_state: stateCode(ev.state),
           amount: ev.amount_usd,
           url: item.link,
           raw: { ...ev, headline: item.title, feed: item.feed },

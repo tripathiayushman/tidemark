@@ -5,6 +5,9 @@ import { fmcsaCarriers } from "./fmcsa";
 import { sba504, sba7a } from "./sba";
 import { tradePress } from "./press";
 import { seedConnector } from "./seed";
+import { ftzNotices } from "./ftz";
+import { ctUcc } from "./ucc";
+import { warnNotices } from "./warn";
 
 // Registry of every data connector. Customs shipments and supplier switches
 // need a licensed bill-of-lading provider (ImportGenius, Panjiva, ...); until
@@ -16,6 +19,9 @@ export const CONNECTORS: Connector[] = [
   sba504,
   sba7a,
   tradePress,
+  ftzNotices,
+  ctUcc,
+  warnNotices,
   seedConnector,
 ];
 
