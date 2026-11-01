@@ -112,6 +112,10 @@ async function resolveOne(db: SupabaseClient, rec: StoredRecord, stats: ResolveS
 
     const connector = connectorFor(rec.source, rec.dataset);
     const drafts = connector ? connector.toSignals({ ...rec, company_id: companyId }) : [];
+    if (connector?.afterMatch) {
+      const extra = await connector.afterMatch(db, { ...rec, company_id: companyId }, companyId);
+      if (extra?.length) drafts.push(...extra);
+    }
     if (drafts.length) {
       const { error: sErr } = await db.from("signals").upsert(
         drafts.map((d) => ({

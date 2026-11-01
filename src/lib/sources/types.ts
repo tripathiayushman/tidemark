@@ -70,6 +70,12 @@ export interface Connector {
   fetch(ctx: FetchContext): Promise<FetchResult>;
   /** Turns a stored record into zero or more signals. */
   toSignals(rec: StoredRecord): SignalDraft[];
+  /**
+   * Optional hook after a record is matched to a company: enrich the company
+   * (e.g. headcount, NAICS) and/or return extra signals that need database
+   * context (e.g. year-over-year growth against a stored snapshot).
+   */
+  afterMatch?(db: import("@supabase/supabase-js").SupabaseClient, rec: StoredRecord, companyId: string): Promise<SignalDraft[] | void>;
 }
 
 export function num(v: unknown): number | null {

@@ -20,7 +20,7 @@ const DEFAULT_LOOKBACK = 540;
 const SOURCE_RELIABILITY: Record<RecordSource, number> = {
   usaspending: 1, sba: 1, permits: 1, fmcsa: 0.95, osha: 0.9, customs: 0.95,
   licensed: 0.9, website: 0.7, press: 0.75, manual: 0.8, seed: 1,
-  federal_register: 1, ucc: 0.85, warn: 0.9,
+  federal_register: 1, ucc: 0.85, warn: 0.9, epa: 1,
 };
 
 const NEGATIVE_TYPES = new Set(["warn_notice", "plant_closure", "bankruptcy"]);

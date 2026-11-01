@@ -5,7 +5,7 @@ export type SignalCategory = "money_moving" | "building" | "equipment_supply" | 
 export type RecordSource =
   | "usaspending" | "sba" | "permits" | "fmcsa" | "osha" | "customs"
   | "website" | "press" | "licensed" | "manual" | "seed"
-  | "federal_register" | "ucc" | "warn";
+  | "federal_register" | "ucc" | "warn" | "epa";
 export type ResearchStatus = "queued" | "researching" | "checking" | "qualified" | "not_now" | "disqualified" | "error";
 export type Tier = "S" | "A" | "B" | "C";
 export type AccountStatus = "prospect" | "contacted" | "engaged" | "meeting" | "opportunity" | "customer" | "lost" | "archived";
