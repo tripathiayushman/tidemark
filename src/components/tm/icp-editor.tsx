@@ -89,6 +89,7 @@ export function IcpEditor({ initial, onSaved, showDrafting = true }: { initial?:
             </div>
           ))}
           <Button variant="outline" size="sm" onClick={() => set({ industries: [...(c.industries ?? []), { naics_prefix: "", label: "" }] })}><Plus /> Add industry</Button>
+          {!(c.industries ?? []).length ? <p className="text-xs text-muted-foreground">No industries yet — saving will target all of manufacturing (NAICS 31–33). Use “Draft my ICP” for a sharper profile.</p> : null}
         </div>
       </fieldset>
 

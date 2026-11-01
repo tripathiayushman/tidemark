@@ -35,11 +35,20 @@ export async function saveIcp(draft: IcpDraft) {
   if (!ctx) return { error: "No workspace" };
   const supabase = await createClient();
   const { count } = await supabase.from("icps").select("id", { count: "exact", head: true }).eq("workspace_id", ctx.workspace.id);
+  // Tidemark targets manufacturers: an ICP with no industries means "all of manufacturing" (NAICS 31–33), not "everything".
+  const criteria = { ...draft.criteria };
+  if (!criteria.industries?.length) {
+    criteria.industries = [
+      { naics_prefix: "31", label: "Manufacturing — food, beverage, textiles" },
+      { naics_prefix: "32", label: "Manufacturing — wood, paper, chemicals, plastics" },
+      { naics_prefix: "33", label: "Manufacturing — metals, machinery, electronics, vehicles" },
+    ];
+  }
   const row = {
     workspace_id: ctx.workspace.id,
     name: draft.name.trim() || "Primary",
     description: draft.description,
-    criteria: draft.criteria,
+    criteria,
     buyer_roles: draft.buyer_roles,
     signal_preferences: draft.signal_preferences,
     is_primary: draft.is_primary ?? (count ?? 0) === 0,
