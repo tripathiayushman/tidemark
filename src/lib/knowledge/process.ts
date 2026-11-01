@@ -5,6 +5,7 @@ import { enqueue } from "@/lib/jobs";
 import type { BuyerRole, IcpCriteria, SignalPreferences } from "@/lib/types";
 import { embed, toPgVector } from "./embed";
 import { chunkText, extractText, htmlToText } from "./extract";
+import { allowedToFetch } from "./robots";
 
 // Knowledge base pipeline:
 //   upload / website → text → chunks (+ optional embeddings)
@@ -75,6 +76,10 @@ export async function crawlSite(url: string, maxPages = 8): Promise<string> {
     const next = queue.shift()!;
     if (seen.has(next)) continue;
     seen.add(next);
+    if (!(await allowedToFetch(next))) {
+      if (seen.size === 1) throw new Error(`${start.host} asks crawlers not to read its pages (robots.txt). Upload documents instead.`);
+      continue;
+    }
     try {
       const res = await fetch(next, { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "TidemarkBot/1.0 (knowledge import)" }, redirect: "follow" });
       if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) continue;
